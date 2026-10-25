@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Negotiation Planner</title>
+<meta name="description" content="A shared negotiation planning document for student teams: positions, interests, BATNA, ZOPA, concessions, intelligence gaps and contingencies, edited live together.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231F5FA8'/%3E%3Cpath d='M7 20h7M18 12h7' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M12 16h8' stroke='%23F0A570' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<script>
+/* ============================================================
+   LIVE SYNC SETTINGS
+   Paste your Firebase web app config here (see README.md).
+   Leave projectId empty to run in "this device only" mode.
+   ============================================================ */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAE-3dw_rTjmPagq9b4yQ2YTV8URXtdzpo",
+  authDomain: "negotiation-planner.firebaseapp.com",
+  projectId: "negotiation-planner",
+  appId: "1:598156375153:web:e179f3c3fb261aa575d7d0"
+};
+</script>
+<style>
+/* Layout: sticky section index on the left, the planning document as one scrolling column on the right; stacks to one column on phones. */
+:root{
+  --bg:#F3F5F8; --panel:#FFFFFF; --ink:#15213A; --muted:#536079; --line:#D9DFE8; --soft:#EBEFF5;
+  --accent:#1F5FA8; --accent-ink:#FFFFFF; --accent-soft:#E4EDF8;
+  --self:#1F5FA8; --self-soft:#E4EDF8; --other:#A8460E; --other-soft:#FBEBDF;
+  --ok:#1C7A4E; --ok-soft:#E2F2E9; --warn:#A8460E; --warn-soft:#FBEBDF; --unk:#7A4C9E; --unk-soft:#EFE7F6;
+  --display:"Source Serif 4",Georgia,serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1522; --panel:#172033; --ink:#E6ECF5; --muted:#A3B0C6; --line:#2B3852; --soft:#1E2A40;
+  --accent:#7FB0EC; --accent-ink:#0F1522; --accent-soft:#1D3150;
+  --self:#7FB0EC; --self-soft:#1D3150; --other:#F0A570; --other-soft:#3C2617;
+  --ok:#6BC79A; --ok-soft:#173A2A; --warn:#F0A570; --warn-soft:#3C2617; --unk:#C7A6E6; --unk-soft:#2E2340; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1522; --panel:#172033; --ink:#E6ECF5; --muted:#A3B0C6; --line:#2B3852; --soft:#1E2A40;
+  --accent:#7FB0EC; --accent-ink:#0F1522; --accent-soft:#1D3150;
+  --self:#7FB0EC; --self-soft:#1D3150; --other:#F0A570; --other-soft:#3C2617;
+  --ok:#6BC79A; --ok-soft:#173A2A; --warn:#F0A570; --warn-soft:#3C2617; --unk:#C7A6E6; --unk-soft:#2E2340; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(26px,3.6vw,36px)}
+h2{font-size:22px}
+h3{font-size:17px}
+p{margin:0}
+.muted{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.shell{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.unk{background:var(--unk-soft);color:var(--unk)}
+.btn{font:600 14px var(--body);border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:4px 9px;font-size:13px}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=number],input[type=date],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0;width:100%}
+textarea{resize:vertical;min-height:62px;line-height:1.45}
+select{width:auto}
+label.lbl,.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:22px;align-items:start}
+nav.index{position:sticky;top:calc(12px + env(safe-area-inset-top,0px));background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 24px);overflow:auto}
+nav.index a{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px}
+nav.index a:hover{background:var(--soft)}
+nav.index .st{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid var(--line)}
+nav.index .st.part{border-color:var(--accent);background:linear-gradient(90deg,var(--accent) 50%,transparent 50%)}
+nav.index .st.done{border-color:var(--ok);background:var(--ok)}
+nav.index .ow{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600}
+.doc{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;min-width:0;scroll-margin-top:16px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.sec-h h2{flex:1 1 220px}
+.sec-h .who{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.editing{display:inline-flex;gap:4px;flex-wrap:wrap}
+.editing span{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.hint{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+/* self vs other */
+.so{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.so>div{padding:10px 12px;border-top:1px solid var(--line);min-width:0}
+.so .hd{border-top:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.so .hd.self{background:var(--self-soft);color:var(--self)}
+.so .hd.other{background:var(--other-soft);color:var(--other)}
+.so .rl{font-weight:600;background:var(--soft)}
+.so .rl small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.so .cell{display:flex;flex-direction:column;gap:6px}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tagrow select{font-size:13px;padding:4px 6px}
+.tagrow input{font-size:13px;padding:4px 8px;flex:1 1 140px}
+.cell.t-S{box-shadow:inset 3px 0 0 var(--ok)}
+.cell.t-I{box-shadow:inset 3px 0 0 var(--accent)}
+.cell.t-U{box-shadow:inset 3px 0 0 var(--unk)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table.rows{border-collapse:collapse;width:100%;min-width:640px}
+table.rows th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+table.rows td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}
+table.rows td textarea{min-height:44px}
+table.rows td.act{width:40px;text-align:right}
+table.rows input.seq{width:64px}
+/* zopa */
+.zopa-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.zchart{background:var(--soft);border-radius:12px;padding:10px;overflow-x:auto}
+.zchart svg{display:block;width:100%;min-width:520px;height:auto}
+.zsum{font-size:15px}
+.callout{border-radius:10px;padding:10px 13px;background:var(--soft);font-size:14px}
+.callout.ok{background:var(--ok-soft)}
+.callout.warn{background:var(--warn-soft)}
+/* overview */
+.stats{display:flex;flex-wrap:wrap;gap:22px}
+.stat b{display:block;font:600 24px var(--mono)}
+.meter{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.members{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border-radius:999px;background:var(--soft);font-size:14px}
+.mchip button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;border-radius:50%}
+.unklist{display:flex;flex-direction:column;gap:6px}
+.unk-item{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--unk-soft)}
+.unk-item span{flex:1 1 220px;min-width:0}
+/* home */
+.home{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.card p{flex:1}
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(10,15,25,.55);display:grid;place-items:center;z-index:30;padding:16px}
+.modal .box{background:var(--panel);border-radius:14px;padding:20px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:12px;border:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;z-index:40;max-width:90vw}
+.sync{font-size:12.5px}
+#printDoc{display:none}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr}
+  nav.index{position:static;flex-direction:row;overflow-x:auto;max-height:none}
+  nav.index a{white-space:nowrap}
+  nav.index .ow{display:none}
+  .so{grid-template-columns:1fr}
+  .so .hd{display:none}
+  .so .rl{border-top:2px solid var(--line)}
+  .so .cell::before{content:attr(data-side);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .so .cell.selfc::before{color:var(--self)}
+  .so .cell.otherc::before{color:var(--other)}
+}
+@media print{
+  body{background:#fff;padding:0;color:#000}
+  .shell,.home,.modal,.toast{display:none!important}
+  #printDoc{display:block}
+}
+#printDoc{font:11pt/1.4 var(--body);color:#000}
+#printDoc h1{font-size:18pt;margin-bottom:4pt}
+#printDoc h2{font-size:13pt;margin:14pt 0 6pt}
+#printDoc table{border-collapse:collapse;width:100%;margin-bottom:6pt}
+#printDoc th,#printDoc td{border:1px solid #888;padding:4pt 6pt;text-align:left;vertical-align:top}
+#printDoc th{background:#eee}
+#printDoc .pg{page-break-before:always}
+</style>
+</head>
+<body>
+<div id="home" class="home" hidden></div>
+<div id="app" class="shell" hidden></div>
+<div id="printDoc" aria-hidden="true"></div>
+
+<script>
+/* =====================================================================
+   Definitions
+   ===================================================================== */
+const MAP_ROWS=[['positions','Positions'],['interests','Interests'],['batna','BATNA'],['reservation','Reservation price'],['target','Target / goals'],
+  ['power','Sources of power'],['weak','Weaknesses'],['authority','Authority','Who decides, who signs'],['time','Time pressure','Deadlines, exposure to delay']];
+const SECTIONS=[
+ ['overview','Overview & team'],['map','Self vs other'],['zopa','1 · Zone of possible agreement'],['concess','2 · Concession plan'],['process','3 · Process design'],
+ ['walk','4 · Walk-away triggers'],['rel','5 · Relationship after the deal'],['gaps','6 · Intelligence gap register'],['opening','7 · Opening move'],
+ ['cont','8 · Contingencies'],['other','9 · Other information'],['spar','Sparring partner'],['export','Export & share']];
+const ROWDEFS={
+ concess:{cols:[['item','Item I can trade'],['cost','What it costs me'],['expect','What I expect in return'],['seq','Sequence','seq']],add:'Add a tradeable item'},
+ gaps:{cols:[['unknown','Unknown'],['why','Why it matters'],['how','How to close it'],['by','By when','date']],add:'Add an unknown'},
+ cont:{cols:[['move','Their move'],['resp','My response'],['tell','Trigger / tell']],add:'Add a contingency'}};
+const TEXTS={process:[['proc_mine','Attendees: ours'],['proc_theirs','Attendees: theirs'],['proc_channel','Channel and venue'],['proc_agenda','Agenda and sequence of topics'],['proc_rounds','Rounds expected / timetable']],
+ walk:[['walk','Walk-away triggers (non-price, observable)']],rel:[['rel','What the relationship must look like after signature']],
+ opening:[['open_anchor','Anchor'],['open_just','Justification'],['open_first','First words'],['open_hide','What we do not reveal']],other:[['other','Other information']]};
+const TAGS={S:'Stated',I:'Inferred',U:'Unknown'};
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid=(n=20)=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';let s='';const r=crypto.getRandomValues(new Uint8Array(n));for(const x of r)s+=a[x%a.length];return s};
+const getPath=(o,p)=>p.split('.').reduce((a,k)=>a==null?undefined:a[k],o);
+function setPath(o,p,v){const ks=p.split('.');let a=o;for(let i=0;i<ks.length-1;i++){if(a[ks[i]]==null||typeof a[ks[i]]!=='object')a[ks[i]]={};a=a[ks[i]]}if(v===DEL)delete a[ks.at(-1)];else a[ks.at(-1)]=v}
+const DEL={__del:true};
+function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2400)}
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const fmtN=v=>Number.isFinite(v)?(Math.abs(v)<10?(+v.toFixed(3)).toString():(+v.toFixed(1)).toString()):'–';
+const CID=(ls.get('np-cid')||(()=>{const c=rid(10);ls.set('np-cid',c);return c})());
+let ME=ls.get('np-name')||'';
+
+/* =====================================================================
+   Example + blank plans
+   ===================================================================== */
+function blankPlan(){return{v:1,meta:{title:'Negotiation plan',name:'',role:'',negotiation:'',date:'',preparedBy:'',members:{}},fields:{},rows:{concess:{},gaps:{},cont:{}},owners:{},zopa:{side:'seller',unit:'€',myRes:null,myTarget:null,theirRes:null,theirOpen:null},presence:{}}}
+function examplePlan(){const p=blankPlan();let o=1;const m=n=>{const id=rid(8);p.meta.members[id]={name:n,o:o++};return id};
+ const J=m('Jordan'),C=m('Casey'),A=m('Alex'),Sm=m('Sam'),T=m('Taylor');
+ Object.assign(p.meta,{title:'LoopBox × Maison Vercors',name:'Jordan',role:'CMO · lead negotiator',negotiation:'LoopBox × Maison Vercors Restauration: 12-site reusable packaging agreement (fictional example)',date:'2026-11-12',preparedBy:'LoopBox team'});
+ const f=(k,text,tag,conf,basis)=>p.fields[k]={text,tag,conf:conf||'',basis:basis||''};
+ f('self_positions','€0.20 per meal served in a LoopBox container, 12-month contract across all 12 sites.','S');
+ f('other_positions','Wants €0.12 per meal at most, a 6-month trial and the right to exit at any time.','S');
+ f('self_interests','An anchor client in Grenoble to prove unit economics before the seed round; a reference logo; a dense return-point network.','S');
+ f('other_interests','Cut packaging and waste costs, avoid compliance penalties, keep takeaway fast at the lunch rush.','I','M','Their sustainability report and comments from two store managers.');
+ f('self_batna','Pilot with 4 independent campus cafés already in talks (about 40% of the volume).','S');
+ f('other_batna','Stay with compostable boxes at about €0.14 per meal plus rising waste fees.','I','M','Public supplier price lists; city waste-fee schedule.');
+ f('self_reservation','€0.15 per meal for a 12-month, 12-site deal. Below that, return-point logistics lose money.','S');
+ f('other_reservation','About €0.17 per meal: today\'s €0.14 plus estimated waste and compliance costs.','I','L','Our own cost model; not verified with them.');
+ f('self_target','€0.19 per meal, 18-month term, co-branded launch.','S');
+ f('other_target','€0.12 per meal with no minimum volume.','S');
+ f('self_power','New single-use packaging rules raise their compliance risk; we handle washing and logistics; demand data from the campus pilot.','S');
+ f('other_power','12 sites is the largest early volume in the city; other reuse providers are courting them.','S');
+ f('self_weak','No large-chain reference yet; washing capacity limited until Q2; a long delay hurts our runway.','S');
+ f('other_weak','Under pressure from the city council to show progress on reuse by next year.','I','M','Local press coverage.');
+ f('self_authority','Jordan negotiates; Alex signs anything over 6 months; Casey approves logistics service levels.','S');
+ f('other_authority','Unclear whether the head of procurement can sign without the owner.','U');
+ f('self_time','We want an anchor client signed before the seed round in 10 weeks.','S');
+ f('other_time','Do they face a hard compliance deadline?','U');
+ Object.assign(p.zopa,{side:'seller',unit:'€ per meal',myRes:0.15,myTarget:0.19,theirRes:0.17,theirOpen:0.12});
+ f('zopa_mine_basis','Cost model v3 (Casey and Sam). Confidence: high.','');
+ f('zopa_theirs_basis','Estimate from their current costs. Confidence: low; verify waste fees.','');
+ f('zopa_est','€0.15–0.17 per meal: a narrow zone.','');
+ f('zopa_none','If their real limit is below €0.15, run the café pilot instead and revisit in 6 months.','');
+ const row=(sec,obj)=>{p.rows[sec][rid(8)]={...obj,o:o++}};
+ row('concess',{item:'Free return points at the 3 busiest sites',cost:'About €1,800 in hardware',expect:'An 18-month term',seq:'1'});
+ row('concess',{item:'Co-branded launch campaign',cost:'Jordan\'s time and a small marketing budget',expect:'A case study and reference rights',seq:'2'});
+ row('concess',{item:'Shorter term: 6-month trial',cost:'Less predictable volume',expect:'Price of at least €0.17 and automatic renewal',seq:'3'});
+ f('proc_mine','Jordan (lead), Casey (logistics).','');
+ f('proc_theirs','Head of procurement; operations manager. Owner: unknown.','');
+ f('proc_channel','In person at their central kitchen; follow-ups by video.','');
+ f('proc_agenda','1. Their waste costs → 2. Our pilot data → 3. Service model → 4. Price and term last.','');
+ f('proc_rounds','2–3 meetings over 4 weeks; term sheet by week 4.','');
+ f('walk','They demand exclusivity for the whole city; they refuse any minimum volume beyond 6 months; payment terms over 60 days; they will not share the waste-cost data we need to size the service.','');
+ f('rel','A visible reference partner: joint press, shared data on return rates, quarterly reviews. Both sides should be able to renew without starting again from scratch.','');
+ row('gaps',{unknown:'Who signs on their side?',why:'We must not negotiate with someone who cannot commit.',how:'Ask the operations manager directly; check the company register.',by:'2026-11-05'});
+ row('gaps',{unknown:'Their current waste fees',why:'Sets their real reservation price.',how:'Ask to see one invoice; check the city fee schedule.',by:'2026-11-07'});
+ row('gaps',{unknown:'Any hard compliance deadline?',why:'Time pressure is a lever for us.',how:'Read the city council minutes; ask in round 1.',by:'2026-11-10'});
+ f('open_anchor','€0.21 per meal, 18 months, all 12 sites.','');
+ f('open_just','Includes washing, logistics and compliance reporting. Their all-in cost today is above €0.17 per meal.','');
+ f('open_first','"We\'ve looked at your waste costs, and we think we can take the compliance headache off your desk."','');
+ f('open_hide','Our seed-round deadline, our washing capacity limit and the size of the café pilot.','');
+ row('cont',{move:'They anchor at €0.10',resp:'Do not counter yet. Walk through their all-in cost per meal first.',tell:'They skip the cost discussion.'});
+ row('cont',{move:'They demand city-wide exclusivity',resp:'Offer exclusivity per neighbourhood for 6 months only.',tell:'They mention a competitor chain.'});
+ row('cont',{move:'They stall on the decision maker',resp:'Ask for 30 minutes with the owner before discussing price.',tell:'"I\'ll need to check with…"'});
+ f('other','All names and figures are a fictional course example.','');
+ Object.assign(p.owners,{overview:J,map:J,zopa:C,concess:J,process:C,walk:A,rel:J,gaps:Sm,opening:J,cont:T,other:A});
+ return p}
+
+/* =====================================================================
+   Stores: live (Firebase) and this-device (localStorage)
+   ===================================================================== */
+const CFG=window.FIREBASE_CONFIG||{};const LIVE_OK=!!(CFG.projectId&&CFG.apiKey);
+let fb=null;
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
+async function initFirebase(){if(fb)return fb;const V='10.12.2';
+  await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-app-compat.js`);
+  await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-auth-compat.js`);
+  await loadScript(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore-compat.js`);
+  firebase.initializeApp(CFG);await firebase.auth().signInAnonymously();fb={db:firebase.firestore()};return fb}
+class LocalStore{constructor(id){this.id=id;this.key='np-plan-'+id;this.cbs=[];this.live=false;
+  this.bc=('BroadcastChannel' in window)?new BroadcastChannel('np-'+id):null;if(this.bc)this.bc.onmessage=()=>this.emit()}
+  async exists(){return !!ls.get(this.key)}
+  async create(plan){ls.set(this.key,plan)}
+  subscribe(cb){this.cbs.push(cb);setTimeout(()=>this.emit(),0)}
+  emit(){const d=ls.get(this.key);this.cbs.forEach(cb=>cb(d))}
+  async update(paths){const d=ls.get(this.key)||blankPlan();for(const p in paths)setPath(d,p,paths[p]);d.updatedAt=Date.now();ls.set(this.key,d);if(this.bc)this.bc.postMessage(1)}}
+class FireStore{constructor(id){this.id=id;this.cbs=[];this.live=true}
+  ref(){return fb.db.collection('plans').doc(this.id)}
+  async exists(){const s=await this.ref().get();return s.exists}
+  async create(plan){plan.updatedAt=Date.now();await this.ref().set(plan)}
+  subscribe(cb,err){this.unsub=this.ref().onSnapshot(s=>cb(s.exists?s.data():null),e=>err&&err(e))}
+  async update(paths){const u={};for(const p in paths)u[p]=paths[p]===DEL?firebase.firestore.FieldValue.delete():paths[p];u.updatedAt=Date.now();await this.ref().update(u)}}
+
+/* =====================================================================
+   App state
+   ===================================================================== */
+let store=null,S=null,pending={},flushTimer=null,lastSec='',syncState='idle';
+function queue(path,val,delay=900){pending[path]=val;setPath(S,path,val);clearTimeout(flushTimer);flushTimer=setTimeout(flush,delay);setSync('saving');refreshDerived()}
+async function flush(){const p=pending;pending={};if(!Object.keys(p).length)return;try{await store.update(p);setSync('saved')}catch(e){setSync('error');for(const k in p)if(!(k in pending))pending[k]=p[k];console.error(e)}}
+async function writeNow(paths){for(const p in paths)setPath(S,p,paths[p]);try{await store.update(paths);setSync('saved')}catch(e){setSync('error');console.error(e)}}
+function setSync(s){syncState=s;const el=$('#syncState');if(!el)return;
+  el.className='badge sync '+(s==='error'?'warn':s==='saved'?'ok':'');el.textContent=s==='saving'?'Saving…':s==='saved'?(store.live?'Saved · live':'Saved on this device'):s==='error'?'Not saved: check connection':(store.live?'Live':'This device only')}
+window.addEventListener('beforeunload',()=>{if(Object.keys(pending).length)flush()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
+
+/* =====================================================================
+   Routing: #plan=ID (live), #local=ID (this device), #example
+   ===================================================================== */
+function route(){const h=location.hash.slice(1);const m=h.match(/^(plan|local)=([A-Za-z0-9]{8,40})$/);
+  if(m)return openPlan(m[1],m[2]);if(h==='example')return openExample();renderHome()}
+window.addEventListener('hashchange',route);
+async function openExample(){const id='LoopBoxExample';const st=new LocalStore(id);if(!(await st.exists()))await st.create(examplePlan());location.hash='local='+id}
+async function openPlan(kind,id){$('#home').hidden=true;$('#app').hidden=false;$('#app').innerHTML='<p class="muted">Opening the plan…</p>';
+  try{if(kind==='plan'){if(!LIVE_OK)throw new Error('This link needs live sync, but this copy of the app has no Firebase settings.');await initFirebase();store=new FireStore(id)}else store=new LocalStore(id);
+    if(!(await store.exists()))throw new Error('No plan found at this link. Check that the whole link was copied.');
+    let first=true;store.subscribe(d=>{if(!d)return;S=mergePending(d);if(first){first=false;renderApp();askName()}else syncDom()},e=>{setSync('error');console.error(e)})}
+  catch(e){$('#app').innerHTML=`<div class="card"><h2>Could not open this plan</h2><p>${esc(e.message)}</p><div class="row"><a class="btn" href="#">Back to start</a></div></div>`}}
+function mergePending(d){const c=JSON.parse(JSON.stringify(d));for(const p in pending)setPath(c,p,pending[p]);
+  for(const sec in ROWDEFS)c.rows=c.rows||{},c.rows[sec]=c.rows[sec]||{};c.fields=c.fields||{};c.owners=c.owners||{};c.meta=c.meta||{};c.meta.members=c.meta.members||{};c.zopa=c.zopa||{};c.presence=c.presence||{};return c}
+
+/* =====================================================================
+   Home
+   ===================================================================== */
+function renderHome(){$('#app').hidden=true;const h=$('#home');h.hidden=false;
+  const recent=(ls.get('np-recent')||[]).slice(0,6);
+  h.innerHTML=`
+  <div class="brand"><div class="row"><span class="badge">Business Modeling</span><span class="badge ${LIVE_OK?'ok':''}">${LIVE_OK?'Live sync on':'This device only'}</span></div>
+   <h1 style="margin-top:8px">Negotiation Planner</h1>
+   <p class="muted" style="max-width:62ch">Plan a negotiation together: both sides' positions, interests and BATNAs, the zone of possible agreement, concessions, intelligence gaps, the opening move and contingencies.</p></div>
+  <div class="cards">
+   <div class="card"><h3>Explore the example</h3><p class="muted">LoopBox negotiates a 12-site supply deal with a restaurant group. Every section is filled in.</p><a class="btn" href="#example">Open the LoopBox example</a></div>
+   <div class="card"><h3>Start a team plan</h3><p class="muted">${LIVE_OK?'Creates a shared plan. Send the link to your team and edit together in real time.':'Live sync is not set up in this copy, so the plan is saved on this device only.'}</p>
+    <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="fromEx"> Start from the LoopBox example</label>
+    <button class="btn primary" type="button" id="newPlan">Create plan</button></div>
+   <div class="card"><h3>Join your team</h3><p class="muted">Paste the link your team shared.</p><input type="text" id="joinLink" placeholder="https://…#plan=…" aria-label="Plan link"><button class="btn" type="button" id="joinBtn">Open plan</button></div>
+  </div>
+  ${recent.length?`<div class="card"><h3>Recently opened on this device</h3><div class="unklist">${recent.map(r=>`<a class="btn ghost" style="justify-content:space-between" href="#${esc(r.k)}=${esc(r.id)}"><span>${esc(r.t||'Untitled plan')}</span><span class="muted">${r.k==='plan'?'Live':'This device'}</span></a>`).join('')}</div></div>`:''}`;
+  $('#newPlan').addEventListener('click',async()=>{const p=$('#fromEx').checked?examplePlan():blankPlan();if(!$('#fromEx').checked&&ME){const id=rid(8);p.meta.members[id]={name:ME,o:1}}
+    const id=rid(22);try{if(LIVE_OK){await initFirebase();await new FireStore(id).create(p);location.hash='plan='+id}else{await new LocalStore(id).create(p);location.hash='local='+id}}catch(e){toast('Could not create the plan: '+e.message)}});
+  $('#joinBtn').addEventListener('click',()=>{const v=$('#joinLink').value.trim();const m=v.match(/#?((?:plan|local)=[A-Za-z0-9]{8,40})/);if(m)location.hash=m[1];else toast('That does not look like a plan link')});}
+function remember(){const k=store.live?'plan':'local';const r=(ls.get('np-recent')||[]).filter(x=>!(x.k===k&&x.id===store.id));r.unshift({k,id:store.id,t:S.meta.title});ls.set('np-recent',r.slice(0,10))}
+
+/* =====================================================================
+   App rendering
+   ===================================================================== */
+const members=()=>Object.entries(S.meta.members||{}).sort((a,b)=>(a[1].o||0)-(b[1].o||0)).map(([id,m])=>({id,name:m.name}));
+const mName=id=>(S.meta.members[id]||{}).name||'';
+const initials=n=>(n||'').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function ta(path,ph='',rows=2){return `<textarea data-path="${path}" rows="${rows}" placeholder="${esc(ph)}" aria-label="${esc(ph)}"></textarea>`}
+function ownerSel(sec){return `<span class="who"><label for="own-${sec}">Owner</label><select id="own-${sec}" data-path="owners.${sec}" data-owner><option value="">Unassigned</option>${members().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></span>`}
+function secHead(sec,title,extra=''){return `<div class="sec-h"><h2>${title}</h2><span class="editing" data-editing="${sec}"></span>${extra}${['spar','export'].includes(sec)?'':ownerSel(sec)}</div>`}
+function renderApp(){remember();const app=$('#app');
+  app.innerHTML=`
+  <div class="topbar">
+    <div class="brand"><div class="row"><a class="badge" href="#" style="text-decoration:none">← All plans</a><span id="syncState" class="badge sync"></span><span class="badge" id="online"></span></div>
+      <h1 id="docTitle" style="margin-top:6px"></h1></div>
+    <div class="row"><button class="btn" type="button" id="shareBtn">${store.live?'Copy team link':'How to share'}</button><button class="btn" type="button" id="meBtn"></button></div>
+  </div>
+  <div class="layout">
+   <nav class="index" aria-label="Sections">${SECTIONS.map(([id,t])=>`<a href="#" data-go="${id}"><span class="st" data-st="${id}"></span>${t}<span class="ow" data-ow="${id}"></span></a>`).join('')}</nav>
+   <div class="doc">
+    <section class="sec" id="s-overview" data-sec="overview">${secHead('overview','Overview & team')}
+      <div class="grid4">
+       <div class="field"><label class="lbl" for="m-title">Plan title</label><input type="text" id="m-title" data-path="meta.title"></div>
+       <div class="field"><label class="lbl" for="m-name">Name</label><input type="text" id="m-name" data-path="meta.name"></div>
+       <div class="field"><label class="lbl" for="m-role">Role</label><input type="text" id="m-role" data-path="meta.role"></div>
+       <div class="field"><label class="lbl" for="m-date">Date</label><input type="date" id="m-date" data-path="meta.date"></div>
+      </div>
+      <div class="grid2">
+       <div class="field"><label class="lbl" for="m-neg">Negotiation</label><input type="text" id="m-neg" data-path="meta.negotiation"></div>
+       <div class="field"><label class="lbl" for="m-prep">Prepared by</label><input type="text" id="m-prep" data-path="meta.preparedBy"></div>
+      </div>
+      <div class="field"><span class="lbl">Team</span><div class="members" id="members"></div>
+       <div class="row"><input type="text" id="newMember" placeholder="Add a team member" aria-label="New team member" style="max-width:280px"><button class="btn" type="button" id="addMember">Add</button></div></div>
+      <div class="stats" id="stats"></div>
+      <div class="meter" aria-hidden="true"><i id="meterFill" style="width:0"></i></div>
+      <div class="field"><span class="lbl">Unknowns to investigate</span><div class="unklist" id="unknowns"></div></div>
+    </section>
+
+    <section class="sec" id="s-map" data-sec="map">${secHead('map','Self vs other')}
+      <div class="legend"><span class="badge ok">S · Stated</span><span class="badge">I · Inferred: add the basis and confidence</span><span class="badge unk">U · Unknown: carry it to the gap register</span></div>
+      <div class="so" role="table" aria-label="Self versus other">
+       <div class="hd" role="columnheader"></div><div class="hd self" role="columnheader">Self</div><div class="hd other" role="columnheader">Other</div>
+       ${MAP_ROWS.map(([k,l,s])=>`<div class="rl" role="rowheader">${l}${s?`<small>${s}</small>`:''}</div>${['self','other'].map(side=>{const p='fields.'+side+'_'+k;return `<div class="cell ${side}c" data-side="${side==='self'?'Self':'Other'}" data-cell="${side}_${k}">
+         ${ta(p+'.text',(side==='self'?'Our ':'Their ')+l.toLowerCase())}
+         <div class="tagrow"><select data-path="${p}.tag" aria-label="Source tag"><option value="">Tag…</option><option value="S">S · Stated</option><option value="I">I · Inferred</option><option value="U">U · Unknown</option></select>
+          <select data-path="${p}.conf" data-inferred aria-label="Confidence"><option value="">Confidence…</option><option value="H">High</option><option value="M">Medium</option><option value="L">Low</option></select>
+          <input type="text" data-path="${p}.basis" data-inferred placeholder="Basis for the inference" aria-label="Basis"></div></div>`}).join('')}`).join('')}
+      </div>
+    </section>
+
+    <section class="sec" id="s-zopa" data-sec="zopa">${secHead('zopa','1 · Zone of possible agreement')}
+      <div class="zopa-inputs">
+       <div class="field"><label class="lbl" for="z-side">We are</label><select id="z-side" data-path="zopa.side" style="width:100%"><option value="seller">Selling (we want more)</option><option value="buyer">Buying (we want to pay less)</option></select></div>
+       <div class="field"><label class="lbl" for="z-unit">Unit</label><input type="text" id="z-unit" data-path="zopa.unit" placeholder="e.g. € per meal"></div>
+       <div class="field"><label class="lbl" for="z-mr">Our reservation</label><input type="number" step="any" id="z-mr" data-path="zopa.myRes" data-num></div>
+       <div class="field"><label class="lbl" for="z-mt">Our target</label><input type="number" step="any" id="z-mt" data-path="zopa.myTarget" data-num></div>
+       <div class="field"><label class="lbl" for="z-tr">Their reservation (est.)</label><input type="number" step="any" id="z-tr" data-path="zopa.theirRes" data-num></div>
+       <div class="field"><label class="lbl" for="z-to">Their opening / target</label><input type="number" step="any" id="z-to" data-path="zopa.theirOpen" data-num></div>
+      </div>
+      <div class="zchart" id="zchart" role="img" aria-label="Zone of possible agreement chart"></div>
+      <div class="zsum" id="zsum"></div>
+      <div class="grid2">
+       <div class="field"><label class="lbl">Our reservation: confidence / basis</label>${ta('fields.zopa_mine_basis.text','Confidence and basis')}</div>
+       <div class="field"><label class="lbl">Their reservation (est.): confidence / basis</label>${ta('fields.zopa_theirs_basis.text','Confidence and basis')}</div>
+       <div class="field"><label class="lbl">Estimated ZOPA</label>${ta('fields.zopa_est.text','Range and confidence')}<button class="btn small" type="button" id="useZopa" style="align-self:flex-start">Fill in from the chart</button></div>
+       <div class="field"><label class="lbl">If there is no ZOPA: implication</label>${ta('fields.zopa_none.text','What we do instead')}</div>
+      </div>
+    </section>
+
+    ${rowSection('concess','2 · Concession plan','List what you can trade, what it costs you, what you want back, and in which order to offer it.')}
+
+    <section class="sec" id="s-process" data-sec="process">${secHead('process','3 · Process design')}
+      <div class="grid2">${TEXTS.process.map(([k,l])=>`<div class="field"><label class="lbl">${l}</label>${ta('fields.'+k+'.text',l)}</div>`).join('')}</div>
+    </section>
+    ${textSection('walk','4 · Walk-away triggers','Non-price and observable: what would make you leave the table, whatever the price?')}
+    ${textSection('rel','5 · Relationship after the deal')}
+    ${rowSection('gaps','6 · Intelligence gap register','Everything tagged U lands here. Give each unknown an owner-friendly plan and a date.')}
+    <section class="sec" id="s-opening" data-sec="opening">${secHead('opening','7 · Opening move')}
+      <div class="grid2">${TEXTS.opening.map(([k,l])=>`<div class="field"><label class="lbl">${l}</label>${ta('fields.'+k+'.text',l)}</div>`).join('')}</div>
+    </section>
+    ${rowSection('cont','8 · Contingencies','For each likely move from the other side: your response, and the tell that warns you it is coming.')}
+    ${textSection('other','9 · Other information')}
+
+    <section class="sec" id="s-spar" data-sec="spar">${secHead('spar','Sparring partner')}
+      <p>Rehearse against an AI that plays the other side. The app turns your plan into a role-play prompt. Paste it into your team's AI workspace from Session 1 (Claude, ChatGPT, Gemini or NotebookLM).</p>
+      <div class="row">
+       <label class="lbl" for="sp-kind">Prompt</label><select id="sp-kind"><option value="spar">Role-play the other side</option><option value="debrief">Debrief our rehearsal</option><option value="red">Red-team our plan</option></select>
+       <label class="lbl" for="sp-level">Difficulty</label><select id="sp-level"><option value="firm">Firm but fair</option><option value="tough" selected>Tough</option><option value="brutal">Brutal</option></select>
+      </div>
+      <textarea id="spText" rows="12" readonly aria-label="Generated prompt" style="font-family:var(--mono);font-size:12.5px"></textarea>
+      <div class="row"><button class="btn primary" type="button" id="spCopy">Copy prompt</button><span class="hint">The AI only sees what you paste. Remove anything confidential first.</span></div>
+    </section>
+
+    <section class="sec" id="s-export" data-sec="export">${secHead('export','Export & share')}
+      <div class="grid2">
+       <div class="card" style="padding:14px"><h3>Submit the plan</h3><p class="muted">The Word file follows the course template layout. You can also print it or save it as a PDF.</p>
+        <div class="row"><button class="btn primary" type="button" id="exWord">Download Word file</button><button class="btn" type="button" id="exPrint">Print or save as PDF</button></div></div>
+       <div class="card" style="padding:14px"><h3>Back up or move</h3><p class="muted">Download a backup file, or load one into this plan. Loading replaces the current content for everyone.</p>
+        <div class="row"><button class="btn" type="button" id="exJson">Download backup</button><label class="btn" for="imJson">Load backup</label><input type="file" id="imJson" accept="application/json,.json" hidden></div>
+        <div id="imConfirm" class="callout warn" hidden><p>Replace this plan with the backup for the whole team?</p><div class="row" style="margin-top:8px"><button class="btn primary small" type="button" id="imYes">Replace</button><button class="btn small" type="button" id="imNo">Cancel</button></div></div></div>
+      </div>
+    </section>
+   </div>
+  </div>`;
+  bindApp();syncDom(true);setSync('idle');if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>document.querySelectorAll('#app textarea[data-path]').forEach(grow))}
+function rowSection(sec,title,hint){const d=ROWDEFS[sec];return `<section class="sec" id="s-${sec}" data-sec="${sec}">${secHead(sec,title)}${hint?`<p class="hint">${hint}</p>`:''}
+  <div class="tbl-wrap"><table class="rows"><thead><tr>${d.cols.map(c=>`<th>${c[1]}</th>`).join('')}<th></th></tr></thead><tbody data-rows="${sec}"></tbody></table></div>
+  <button class="btn" type="button" data-addrow="${sec}" style="align-self:flex-start">+ ${d.add}</button></section>`}
+function textSection(sec,title,hint){return `<section class="sec" id="s-${sec}" data-sec="${sec}">${secHead(sec,title)}${hint?`<p class="hint">${hint}</p>`:''}${TEXTS[sec].map(([k,l])=>ta('fields.'+k+'.text',l,4)).join('')}</section>`}
+function rowsHTML(sec){const d=ROWDEFS[sec];const rows=Object.entries(S.rows[sec]||{}).sort((a,b)=>(a[1].o||0)-(b[1].o||0));
+  if(!rows.length)return `<tr><td colspan="${d.cols.length+1}" class="hint">Nothing here yet.</td></tr>`;
+  return rows.map(([id])=>`<tr data-rid="${id}">${d.cols.map(([k,l,t])=>`<td>${t==='date'?`<input type="date" data-path="rows.${sec}.${id}.${k}" aria-label="${l}">`:t==='seq'?`<input type="text" class="seq" data-path="rows.${sec}.${id}.${k}" aria-label="${l}">`:`<textarea rows="2" data-path="rows.${sec}.${id}.${k}" aria-label="${l}"></textarea>`}</td>`).join('')}
+   <td class="act"><button class="btn small ghost" type="button" data-delrow="${sec}.${id}" aria-label="Delete row">✕</button></td></tr>`).join('')}
+
+/* ---------- binding ---------- */
+function bindApp(){const app=$('#app');
+  app.addEventListener('input',e=>{const el=e.target;const p=el.dataset&&el.dataset.path;if(!p)return;grow(el);
+    if(el.tagName==='SELECT'||el.type==='date')return;let v=el.value;if('num' in el.dataset){v=el.value===''?null:Number(el.value);if(el.value!==''&&!Number.isFinite(v))return}
+    queue(p,v)});
+  app.addEventListener('change',e=>{const el=e.target;const p=el.dataset&&el.dataset.path;if(!p)return;if(el.tagName==='SELECT'||el.type==='date'){queue(p,el.value,50)}});
+  app.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.path)flush()});
+  app.addEventListener('focusin',e=>{const s=e.target.closest('[data-sec]');if(s&&s.dataset.sec!==lastSec){lastSec=s.dataset.sec;presence()}});
+  app.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=$('#s-'+a.dataset.go);if(t){t.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}));
+  app.addEventListener('click',e=>{const add=e.target.closest('[data-addrow]');if(add){const sec=add.dataset.addrow;const id=rid(8);const blank={o:Date.now()};ROWDEFS[sec].cols.forEach(c=>blank[c[0]]='');writeNow({['rows.'+sec+'.'+id]:blank}).then(()=>{syncDom();const f=document.querySelector(`[data-rid="${id}"] [data-path]`);f&&f.focus()});return}
+    const del=e.target.closest('[data-delrow]');if(del){writeNow({['rows.'+del.dataset.delrow]:DEL});syncDom();return}
+    const un=e.target.closest('[data-unk]');if(un){const k=un.dataset.unk;const side=k.startsWith('self')?'Our':'Their';const lab=(MAP_ROWS.find(r=>'self_'+r[0]===k||'other_'+r[0]===k)||[])[1]||k;const id=rid(8);
+      const txt=(S.fields[k]||{}).text||'';writeNow({['rows.gaps.'+id]:{unknown:side+' '+lab.toLowerCase()+(txt?': '+txt:''),why:'',how:'',by:'',o:Date.now()},['fields.'+k+'.g']:id});syncDom();toast('Added to the gap register');return}
+    const rm=e.target.closest('[data-rmm]');if(rm){writeNow({['meta.members.'+rm.dataset.rmm]:DEL});syncDom();return}});
+  const addM=()=>{const n=$('#newMember').value.trim();if(!n)return;writeNow({['meta.members.'+rid(8)]:{name:n,o:Date.now()}});$('#newMember').value='';syncDom()};
+  $('#addMember').addEventListener('click',addM);$('#newMember').addEventListener('keydown',e=>{if(e.key==='Enter')addM()});
+  $('#useZopa').addEventListener('click',()=>{const z=zopaCalc();if(!z.ok){toast(z.msg);return}const t=z.has?`${fmtN(z.lo)}–${fmtN(z.hi)} ${S.zopa.unit||''} (from the chart)`:`No overlap: a gap of ${fmtN(z.gap)} ${S.zopa.unit||''}`;
+    queue('fields.zopa_est.text',t,50);syncDom()});
+  $('#shareBtn').addEventListener('click',shareLink);$('#meBtn').addEventListener('click',()=>askName(true));
+  $('#sp-kind').addEventListener('change',sparFill);$('#sp-level').addEventListener('change',sparFill);
+  $('#spCopy').addEventListener('click',()=>copyText($('#spText')));
+  $('#exWord').addEventListener('click',()=>{flush();download(fileBase()+'.doc','﻿'+buildDoc(true),'application/msword')});
+  $('#exPrint').addEventListener('click',()=>{flush();$('#printDoc').innerHTML=buildDoc(false);window.print()});
+  $('#exJson').addEventListener('click',()=>{const c=JSON.parse(JSON.stringify(S));delete c.presence;download(fileBase()+'.json',JSON.stringify(c,null,2),'application/json')});
+  let imported=null;
+  $('#imJson').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{imported=JSON.parse(await f.text());if(!imported.fields||!imported.meta)throw 0;$('#imConfirm').hidden=false}catch(x){toast('That file is not a plan backup')}e.target.value=''});
+  $('#imNo').addEventListener('click',()=>{imported=null;$('#imConfirm').hidden=true});
+  $('#imYes').addEventListener('click',async()=>{if(!imported)return;const keys=['meta','fields','rows','owners','zopa'];const u={};keys.forEach(k=>u[k]=imported[k]||(k==='rows'?{concess:{},gaps:{},cont:{}}:{}));
+    await writeNow(u);$('#imConfirm').hidden=true;imported=null;renderApp();toast('Backup loaded')});
+  setInterval(()=>{if(!document.hidden)presence(true)},120000);setInterval(()=>renderPresence(),15000);}
+function fileBase(){return (S.meta.title||'negotiation-plan').replace(/[^\w\-]+/g,'-').replace(/-+/g,'-').slice(0,60)}
+function download(name,data,type){const b=new Blob([data],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+function copyText(el){const t=el.value!==undefined?el.value:el.textContent;const fb=()=>{if(el.select){el.select()}toast('Selected. Press Ctrl+C or ⌘C to copy')};
+  try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),fb)}catch(e){fb()}}
+function shareLink(){if(!store.live){toast('Live sync is off in this copy. Use Export & share → Download backup to pass the plan on.');$('#s-export').scrollIntoView();return}
+  const url=location.href.split('#')[0]+'#plan='+store.id;
+  try{navigator.clipboard.writeText(url).then(()=>toast('Team link copied. Anyone with it can edit.'),()=>toast('Copy this link: '+url))}catch(e){toast('Copy this link: '+url)}}
+
+/* ---------- presence ---------- */
+let lastBeat=0;
+function presence(beat){if(!ME)return;const now=Date.now();if(beat&&now-lastBeat<110000)return;lastBeat=now;
+  if(!store.live){return renderPresence()}
+  store.update({['presence.'+CID]:{n:ME,s:lastSec||'overview',t:now}}).catch(()=>{})}
+function renderPresence(){const now=Date.now();const pr=Object.entries(S.presence||{}).filter(([id,p])=>id!==CID&&p&&now-p.t<300000);
+  const on=$('#online');if(on){on.hidden=!store.live;on.textContent=pr.length?'Also here: '+pr.map(p=>p[1].n).join(', '):'Only you right now'}
+  document.querySelectorAll('[data-editing]').forEach(el=>{const sec=el.dataset.editing;el.innerHTML=pr.filter(p=>p[1].s===sec).map(p=>`<span>${esc(p[1].n)} here</span>`).join('')})}
+function askName(force){if(ME&&!force){presence(true);return}const ms=members();
+  const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="box" role="dialog" aria-modal="true" aria-labelledby="nmT"><h3 id="nmT">Who are you?</h3><p class="muted">Your name shows teammates which section you are working on.</p>
+   ${ms.length?`<div class="members">${ms.map(x=>`<button class="mchip" type="button" data-pick="${esc(x.name)}" style="border:0;cursor:pointer;padding:6px 12px">${esc(x.name)}</button>`).join('')}</div>`:''}
+   <input type="text" id="nmIn" placeholder="Your name" aria-label="Your name" value="${esc(ME)}"><div class="row"><button class="btn primary" type="button" id="nmOk">Continue</button></div></div>`;
+  document.body.appendChild(m);const ok=()=>{const v=$('#nmIn').value.trim();if(!v){$('#nmIn').focus();return}ME=v;ls.set('np-name',v);m.remove();$('#meBtn').textContent='You: '+ME;
+    if(!members().some(x=>x.name.toLowerCase()===v.toLowerCase()))writeNow({['meta.members.'+rid(8)]:{name:v,o:Date.now()}}).then(syncDom);presence()};
+  m.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{$('#nmIn').value=b.dataset.pick;ok()}));
+  $('#nmOk').addEventListener('click',ok);$('#nmIn').addEventListener('keydown',e=>{if(e.key==='Enter')ok()});setTimeout(()=>$('#nmIn').focus(),30)}
+
+/* ---------- sync DOM from state ---------- */
+function syncDom(initial){if(!S||!$('#app')||$('#app').hidden)return;const act=document.activeElement;
+  // rows: rebuild a table only when its rows changed
+  for(const sec in ROWDEFS){const tb=document.querySelector(`[data-rows="${sec}"]`);if(!tb)continue;const ids=Object.keys(S.rows[sec]||{}).sort().join(',');
+    if(tb.dataset.ids!==ids){const fp=act&&tb.contains(act)?act.dataset.path:null;const sel=fp&&act.selectionStart!=null?[act.selectionStart,act.selectionEnd]:null;
+      tb.innerHTML=rowsHTML(sec);tb.dataset.ids=ids;if(fp){const n=tb.querySelector(`[data-path="${fp}"]`);if(n){setVal(n);n.focus();if(sel&&n.setSelectionRange)try{n.setSelectionRange(...sel)}catch(e){}}}}}
+  // owner selects need fresh member options
+  const mkey=members().map(m=>m.id+m.name).join('|');
+  document.querySelectorAll('[data-owner]').forEach(sel=>{if(sel.dataset.mkey!==mkey&&sel!==act){sel.innerHTML=`<option value="">Unassigned</option>${members().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}`;sel.dataset.mkey=mkey}});
+  document.querySelectorAll('#app [data-path]').forEach(el=>{if(el===act&&!initial)return;if(Object.prototype.hasOwnProperty.call(pending,el.dataset.path)&&!initial)return;setVal(el)});
+  refreshDerived()}
+function setVal(el){let v=getPath(S,el.dataset.path);if(v==null)v='';v=String(v);if(el.value!==v)el.value=v;grow(el)}
+function grow(el){if(el.tagName!=='TEXTAREA'||!el.dataset.path)return;el.style.height='auto';if(el.scrollHeight)el.style.height=(el.scrollHeight+2)+'px'}
+function refreshDerived(){if(!S||!$('#docTitle'))return;
+  $('#docTitle').textContent=S.meta.title||'Negotiation plan';$('#meBtn').textContent=ME?'You: '+ME:'Set your name';
+  // tags
+  MAP_ROWS.forEach(([k])=>['self','other'].forEach(side=>{const key=side+'_'+k;const f=S.fields[key]||{};const cell=document.querySelector(`[data-cell="${key}"]`);if(!cell)return;
+    cell.classList.remove('t-S','t-I','t-U');if(f.tag)cell.classList.add('t-'+f.tag);cell.querySelectorAll('[data-inferred]').forEach(x=>x.hidden=f.tag!=='I')}));
+  // members
+  const mbox=$('#members');if(mbox){const ms=members();const key=ms.map(m=>m.id+m.name).join('|');if(mbox.dataset.k!==key){mbox.dataset.k=key;
+    mbox.innerHTML=ms.map(m=>`<span class="mchip">${esc(m.name)}<button type="button" data-rmm="${m.id}" aria-label="Remove ${esc(m.name)}">×</button></span>`).join('')||'<span class="hint">No team members yet.</span>'}}
+  // completeness
+  const comp=completeness();let filled=0,total=0;SECTIONS.forEach(([id])=>{const c=comp[id];const st=document.querySelector(`[data-st="${id}"]`);if(!c||!st)return;filled+=c.f;total+=c.t;
+    st.className='st'+(c.f>=c.t?' done':c.f>0?' part':'');st.title=`${c.f} of ${c.t} filled`});
+  SECTIONS.forEach(([id])=>{const o=document.querySelector(`[data-ow="${id}"]`);if(o)o.textContent=initials(mName(S.owners[id]))});
+  const unk=MAP_ROWS.flatMap(([k,l])=>['self','other'].map(side=>({k:side+'_'+k,l,side,f:S.fields[side+'_'+k]||{}}))).filter(x=>x.f.tag==='U');
+  const inf=MAP_ROWS.flatMap(([k])=>['self','other'].map(s=>S.fields[s+'_'+k]||{})).filter(f=>f.tag==='I');
+  const noBasis=inf.filter(f=>!(f.basis||'').trim()||!f.conf).length;
+  const unowned=SECTIONS.filter(([id])=>!['spar','export'].includes(id)&&!S.owners[id]).length;
+  $('#stats').innerHTML=`<div class="stat"><span class="muted">Completed</span><b>${total?Math.round(filled/total*100):0}%</b></div>
+   <div class="stat"><span class="muted">Unknowns (U)</span><b>${unk.length}</b></div><div class="stat"><span class="muted">Gap register rows</span><b>${Object.keys(S.rows.gaps||{}).length}</b></div>
+   <div class="stat"><span class="muted">Inferences missing basis</span><b>${noBasis}</b></div><div class="stat"><span class="muted">Sections without owner</span><b>${unowned}</b></div>`;
+  $('#meterFill').style.width=(total?filled/total*100:0)+'%';
+  $('#unknowns').innerHTML=unk.length?unk.map(u=>`<div class="unk-item"><span><b>${u.side==='self'?'Self':'Other'} · ${esc(u.l)}</b>${u.f.text?': '+esc(u.f.text):''}</span>${u.f.g&&S.rows.gaps[u.f.g]?'<span class="badge ok">In gap register</span>':`<button class="btn small" type="button" data-unk="${u.k}">Add to gap register</button>`}</div>`).join(''):'<span class="hint">No entries are tagged U. Tag anything you do not know yet as Unknown.</span>';
+  drawZopa();sparFill();renderPresence()}
+function completeness(){const F=k=>!!((S.fields[k]||{}).text||'').trim();const out={};
+  out.overview={f:['title','name','role','negotiation','date','preparedBy'].filter(k=>(S.meta[k]||'').trim()).length+(members().length?1:0),t:7};
+  const keys=MAP_ROWS.flatMap(([k])=>['self_'+k,'other_'+k]);out.map={f:keys.filter(F).length,t:keys.length};
+  const z=S.zopa;out.zopa={f:[z.myRes,z.theirRes].filter(Number.isFinite).length+['zopa_mine_basis','zopa_theirs_basis','zopa_est'].filter(F).length,t:5};
+  for(const sec in ROWDEFS){const first=ROWDEFS[sec].cols[0][0];const n=Object.values(S.rows[sec]||{}).filter(r=>(r[first]||'').trim()).length;out[sec]={f:Math.min(n,sec==='gaps'?1:2),t:sec==='gaps'?1:2}}
+  for(const sec in TEXTS){const ks=TEXTS[sec].map(x=>x[0]);out[sec]={f:ks.filter(F).length,t:ks.length}}
+  return out}
+
+/* ---------- ZOPA ---------- */
+function zopaCalc(){const z=S.zopa;const mr=z.myRes,tr=z.theirRes;if(!Number.isFinite(mr)||!Number.isFinite(tr))return{ok:false,msg:'Enter both reservation prices first.'};
+  const seller=z.side!=='buyer';const lo=seller?mr:tr,hi=seller?tr:mr;return{ok:true,seller,has:hi>=lo,lo,hi,gap:lo-hi,width:hi-lo}}
+function drawZopa(){const box=$('#zchart');if(!box)return;const z=S.zopa;const vals=[z.myRes,z.myTarget,z.theirRes,z.theirOpen].filter(Number.isFinite);
+  if(vals.length<2){box.innerHTML='<p class="hint" style="padding:12px">Enter at least the two reservation prices to draw the zone.</p>';$('#zsum').innerHTML='';return}
+  const cs=getComputedStyle(document.documentElement);const C=n=>cs.getPropertyValue(n).trim();
+  let mn=Math.min(...vals),mx=Math.max(...vals);const pad=(mx-mn||Math.abs(mx)||1)*0.12;mn-=pad;mx+=pad;const W=900,L=150,X=v=>L+(v-mn)/(mx-mn)*(W-L-40);
+  const r=zopaCalc();const seller=z.side!=='buyer';
+  const bar=(a,b,y,col,label)=>`<text x="${L-14}" y="${y+12}" text-anchor="end" font-size="15" font-weight="700" fill="${col}">${label}</text>`+(Number.isFinite(a)&&Number.isFinite(b)?`<rect x="${Math.min(X(a),X(b))}" y="${y}" width="${Math.max(3,Math.abs(X(b)-X(a)))}" height="16" rx="8" fill="${col}" opacity=".85"/>`:'');
+  const mark=(v,y,col,label)=>Number.isFinite(v)?`<line x1="${X(v)}" x2="${X(v)}" y1="${y-6}" y2="${y+22}" stroke="${col}" stroke-width="3"/><text x="${X(v)}" y="${y+40}" font-size="13.5" text-anchor="middle" fill="${C('--ink')}">${esc(label)} ${fmtN(v)}</text>`:'';
+  let zone='';if(r.ok){if(r.has)zone=`<rect x="${X(r.lo)}" y="36" width="${Math.max(2,X(r.hi)-X(r.lo))}" height="170" fill="${C('--ok')}" opacity=".16"/><text x="${(X(r.lo)+X(r.hi))/2}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${C('--ok')}">ZOPA</text>`;
+    else zone=`<rect x="${X(r.hi)}" y="36" width="${Math.max(2,X(r.lo)-X(r.hi))}" height="170" fill="${C('--warn')}" opacity=".14"/><text x="${(X(r.lo)+X(r.hi))/2}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${C('--warn')}">No overlap</text>`}
+  // ticks
+  const step=niceStep((mx-mn)/6);let ticks='';for(let t=Math.ceil(mn/step)*step;t<=mx;t+=step)ticks+=`<line x1="${X(t)}" x2="${X(t)}" y1="206" y2="212" stroke="${C('--muted')}"/><text x="${X(t)}" y="230" font-size="13" text-anchor="middle" fill="${C('--muted')}">${fmtN(+t.toFixed(6))}</text>`;
+  const ourRange=seller?[z.myRes,z.myTarget]:[z.myTarget,z.myRes];const theirRange=seller?[z.theirOpen,z.theirRes]:[z.theirRes,z.theirOpen];
+  box.innerHTML=`<svg viewBox="0 0 ${W} 242" xmlns="http://www.w3.org/2000/svg">${zone}
+   <line x1="${L-10}" x2="${W-30}" y1="206" y2="206" stroke="${C('--muted')}"/>${ticks}
+   ${bar(ourRange[0],ourRange[1],62,C('--self'),'Us')}${mark(z.myRes,62,C('--self'),'our walk-away')}
+   ${bar(theirRange[0],theirRange[1],140,C('--other'),'Them (est.)')}${mark(z.theirRes,140,C('--other'),'their walk-away')}
+   <text x="${L-14}" y="230" text-anchor="end" font-size="13" fill="${C('--muted')}">${esc(z.unit||'')}</text></svg>`;
+  const u=esc(z.unit||'');let s='';
+  if(r.ok){s=r.has?`<div class="callout ok"><b>ZOPA: ${fmtN(r.lo)} – ${fmtN(r.hi)} ${u}</b>. Width ${fmtN(r.width)}.${Number.isFinite(z.myTarget)?(seller?(z.myTarget>r.hi?' Your target is above their estimated limit: expect to concede toward the zone.':''):(z.myTarget<r.lo?' Your target is below their estimated limit: expect to concede toward the zone.':'')):''} Their reservation is an estimate, so close the related intelligence gaps first.</div>`
+    :`<div class="callout warn"><b>No ZOPA on current estimates</b>: a gap of ${fmtN(r.gap)} ${u}. Re-check their reservation, add value through other terms, or rely on your BATNA.</div>`}
+  $('#zsum').innerHTML=s}
+function niceStep(x){const p=Math.pow(10,Math.floor(Math.log10(x||1)));const n=x/p;return (n<1.5?1:n<3?2:n<7?5:10)*p}
+
+/* ---------- sparring prompts ---------- */
+function sparFill(){const out=$('#spText');if(!out||!S)return;const kind=$('#sp-kind').value,lvl=$('#sp-level').value;
+  const F=k=>((S.fields[k]||{}).text||'').trim();const z=S.zopa;const u=z.unit||'';
+  const other=MAP_ROWS.map(([k,l])=>{const f=S.fields['other_'+k]||{};return f.text?`- ${l}: ${f.text}${f.tag?` [${TAGS[f.tag]}${f.tag==='I'&&f.conf?', confidence '+f.conf:''}]`:''}`:''}).filter(Boolean).join('\n');
+  const self=MAP_ROWS.map(([k,l])=>{const f=S.fields['self_'+k]||{};return f.text?`- ${l}: ${f.text}`:''}).filter(Boolean).join('\n');
+  const conc=Object.values(S.rows.concess||{}).sort((a,b)=>(a.o||0)-(b.o||0)).filter(r=>r.item).map(r=>`- ${r.item} (costs us: ${r.cost||'?'}; we want: ${r.expect||'?'})`).join('\n');
+  const tone={firm:'Be firm but fair. Concede when given good reasons.',tough:'Be tough. Push hard on price and terms, test every claim, and concede only for something in return.',brutal:'Be very tough. Use pressure tactics such as deadlines, competitor offers and silence. Concede rarely.'}[lvl];
+  let t='';
+  if(kind==='spar')t=`You are role-playing the other party in a negotiation so that our team can rehearse.
+
+NEGOTIATION: ${S.meta.negotiation||'(not specified)'}
+YOU PLAY: the other side${S.fields.proc_theirs&&F('proc_theirs')?' ('+F('proc_theirs')+')':''}.
+
+What we believe about your side (some of it may be wrong; stay realistic):
+${other||'- (nothing entered yet)'}
+${Number.isFinite(z.theirRes)?`Your private walk-away point is around ${fmtN(z.theirRes)} ${u}. Never reveal it.`:''}${Number.isFinite(z.theirOpen)?` Open at about ${fmtN(z.theirOpen)} ${u}.`:''}
+
+RULES
+- Stay in character. ${tone}
+- Raise at least one objection we have not prepared for.
+- Ask probing questions about our weaknesses, but only use what a real counterpart could plausibly know.
+- Keep each reply under 120 words. Wait for our answer before continuing.
+- If we say "PAUSE", step out of character and score our last move from 1 to 10, with one specific improvement.
+- When we say "END", give a short debrief: where we conceded too fast, what we left on the table, and whether the deal beats our BATNA.
+
+Start by greeting us and stating your opening position.`;
+  if(kind==='debrief')t=`Act as a negotiation coach. Below is our plan and, after it, the transcript of a rehearsal. Assess the rehearsal against the plan.
+
+OUR PLAN
+${self||'- (not entered)'}
+Our reservation: ${fmtN(z.myRes)} ${u} · our target: ${fmtN(z.myTarget)} ${u}
+Planned concessions:
+${conc||'- (none listed)'}
+Walk-away triggers: ${F('walk')||'(none listed)'}
+Opening move: ${F('open_anchor')||'(none)'}. ${F('open_just')}
+
+Please answer:
+1. Did we keep to our reservation price and concession sequence? Quote the moment we deviated.
+2. Which of their claims did we accept without testing?
+3. Three specific lines we should say differently next time.
+4. One intelligence gap we should close before the real meeting.
+
+TRANSCRIPT
+[paste the rehearsal here]`;
+  if(kind==='red')t=`Act as a sceptical negotiation expert and red-team our plan. Do not praise it.
+
+NEGOTIATION: ${S.meta.negotiation||'(not specified)'}
+OUR SIDE
+${self||'- (not entered)'}
+THEIR SIDE (our assumptions; tags show Stated / Inferred / Unknown)
+${other||'- (not entered)'}
+ZOPA estimate: ${F('zopa_est')||'(not entered)'}
+Opening move: ${F('open_anchor')||'(none)'}. Not to reveal: ${F('open_hide')||'(nothing listed)'}
+
+Please return:
+1. The three weakest assumptions in this plan, ranked, and why each could be wrong.
+2. The most likely move from them that we have not prepared a contingency for.
+3. Whether our BATNA is truly better than a bad deal, and what would change that.
+4. One frugal way to test our riskiest assumption before the meeting.`;
+  out.value=t}
+
+/* ---------- export document ---------- */
+function buildDoc(full){const F=k=>esc(((S.fields[k]||{}).text||'')).replace(/\n/g,'<br>');const z=S.zopa,u=esc(z.unit||'');
+  const tagTxt=f=>f.tag?` <i>[${f.tag}${f.tag==='I'?(f.conf?' · '+f.conf:'')+(f.basis?' · '+esc(f.basis):''):''}]</i>`:'';
+  const rowsT=(sec)=>{const d=ROWDEFS[sec];const rs=Object.values(S.rows[sec]||{}).sort((a,b)=>(a.o||0)-(b.o||0));return `<table><tr>${d.cols.map(c=>`<th>${c[1]}</th>`).join('')}</tr>${rs.map(r=>`<tr>${d.cols.map(c=>`<td>${esc(r[c[0]]||'').replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('')||`<tr>${d.cols.map(()=>'<td>&nbsp;</td>').join('')}</tr>`}</table>`};
+  const own=sec=>S.owners[sec]?` <span style="font-weight:400;font-size:9pt">(owner: ${esc(mName(S.owners[sec]))})</span>`:'';
+  const body=`<h1>Negotiation Planning Document</h1>
+  <table><tr><th>Name</th><td>${esc(S.meta.name)}</td><th>Role</th><td>${esc(S.meta.role)}</td></tr><tr><th>Negotiation</th><td colspan="3">${esc(S.meta.negotiation)}</td></tr>
+  <tr><th>Date</th><td>${esc(S.meta.date)}</td><th>Prepared by</th><td>${esc(S.meta.preparedBy)}</td></tr><tr><th>Team</th><td colspan="3">${members().map(m=>esc(m.name)).join(', ')}</td></tr></table>
+  <h2>Self vs other${own('map')}</h2><table><tr><th></th><th>SELF</th><th>OTHER</th></tr>${MAP_ROWS.map(([k,l,s])=>`<tr><th>${l}${s?`<br><span style="font-weight:400;font-size:9pt">(${s})</span>`:''}</th><td>${F('self_'+k)}${tagTxt(S.fields['self_'+k]||{})}</td><td>${F('other_'+k)}${tagTxt(S.fields['other_'+k]||{})}</td></tr>`).join('')}</table>
+  <p style="font-size:9pt">Tags: [S] stated · [I] inferred (basis and confidence H/M/L) · [U] unknown, carried to the intelligence gap register.</p>
+  <h2 class="pg">1. Zone of possible agreement${own('zopa')}</h2><table><tr><th></th><th>Value</th><th>Confidence / basis</th></tr>
+   <tr><th>My reservation price</th><td>${Number.isFinite(z.myRes)?fmtN(z.myRes)+' '+u:''}</td><td>${F('zopa_mine_basis')}</td></tr>
+   <tr><th>Their reservation price (est.)</th><td>${Number.isFinite(z.theirRes)?fmtN(z.theirRes)+' '+u:''}</td><td>${F('zopa_theirs_basis')}</td></tr>
+   <tr><th>Estimated ZOPA</th><td colspan="2">${F('zopa_est')}</td></tr><tr><th>If no ZOPA: implication</th><td colspan="2">${F('zopa_none')}</td></tr></table>
+  <h2>2. Concession plan${own('concess')}</h2>${rowsT('concess')}
+  <h2>3. Process design${own('process')}</h2><table>${[['Attendees (mine / theirs)',F('proc_mine')+(F('proc_theirs')?' / '+F('proc_theirs'):'')],['Channel and venue',F('proc_channel')],['Agenda and sequence of topics',F('proc_agenda')],['Rounds expected / timetable',F('proc_rounds')]].map(([a,b])=>`<tr><th>${a}</th><td>${b}</td></tr>`).join('')}</table>
+  <h2>4. Walk-away triggers${own('walk')}</h2><table><tr><td>${F('walk')||'&nbsp;'}</td></tr></table>
+  <h2 class="pg">5. Relationship after the deal${own('rel')}</h2><table><tr><td>${F('rel')||'&nbsp;'}</td></tr></table>
+  <h2>6. Intelligence gap register${own('gaps')}</h2>${rowsT('gaps')}
+  <h2>7. Opening move${own('opening')}</h2><table>${TEXTS.opening.map(([k,l])=>`<tr><th>${l}</th><td>${F(k)}</td></tr>`).join('')}</table>
+  <h2>8. Contingencies${own('cont')}</h2>${rowsT('cont')}
+  <h2 class="pg">9. Other information${own('other')}</h2><table><tr><td>${F('other')||'&nbsp;'}</td></tr></table>`;
+  if(!full)return body;
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(S.meta.title)}</title>
+  <style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}h1{font-size:18pt}h2{font-size:13pt;margin-top:14pt}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:4pt 6pt;vertical-align:top;text-align:left}th{background:#EEEEEE}.pg{page-break-before:always}</style></head><body>${body}</body></html>`}
+
+/* ---------- boot ---------- */
+route();
+</script>
+</body>
+</html>
